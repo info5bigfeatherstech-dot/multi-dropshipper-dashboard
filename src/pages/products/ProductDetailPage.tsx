@@ -784,7 +784,7 @@ export const ProductDetailPage: React.FC = () => {
                 <Download className="w-4 h-4 text-brand-600" />
                 Download Product Assets & Details
               </h3>
-              <p className="text-xs text-slate-500 mt-1">
+              <p className="text-xs text-slate-500 mt-1 capitalize">
                 Save official marketing imagery and supplier compliance datasheets for your store catalog.
               </p>
             </div>
@@ -807,7 +807,7 @@ export const ProductDetailPage: React.FC = () => {
                       PDF
                     </span>
                   </div>
-                  <p className="text-[11px] text-slate-500 line-clamp-2">
+                  <p className="text-[11px] text-slate-500 line-clamp-2 capitalize">
                     Printable product specification datasheet with wholesale pricing & margins
                   </p>
                 </div>
@@ -830,7 +830,7 @@ export const ProductDetailPage: React.FC = () => {
                       CSV
                     </span>
                   </div>
-                  <p className="text-[11px] text-slate-500 line-clamp-2">
+                  <p className="text-[11px] text-slate-500 line-clamp-2 capitalize">
                     Structured tabular data formatted for Shopify, WooCommerce or Excel
                   </p>
                 </div>
@@ -857,7 +857,7 @@ export const ProductDetailPage: React.FC = () => {
                       JPG
                     </span>
                   </div>
-                  <p className="text-[11px] text-slate-500 line-clamp-2">
+                  <p className="text-[11px] text-slate-500 line-clamp-2 capitalize">
                     High-res image file of Photo {selectedImageIndex + 1}
                   </p>
                 </div>
@@ -884,7 +884,7 @@ export const ProductDetailPage: React.FC = () => {
                       {images.length} FILES
                     </span>
                   </div>
-                  <p className="text-[11px] text-slate-500 line-clamp-2">
+                  <p className="text-[11px] text-slate-500 line-clamp-2 capitalize">
                     Batch download all verified supplier product angles
                   </p>
                 </div>
@@ -1125,7 +1125,7 @@ export const ProductDetailPage: React.FC = () => {
                 <ShieldCheck className="w-4 h-4 text-emerald-600" />
                 <span>Supplier Wholesale Protection</span>
               </div>
-              <p className="leading-relaxed text-[11px]">
+              <p className="leading-relaxed text-[11px] capitalize">
                 Orders placed through this portal are direct-to-consumer drop-shipped in blind generic packaging with zero middleman supplier branding.
               </p>
             </div>

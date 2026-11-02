@@ -251,7 +251,7 @@ export const OrdersPage: React.FC = () => {
               {totalOrdersCount} Total
             </span>
           </div>
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="text-sm text-slate-500 mt-1 capitalize">
             Real-time fulfillment tracking, admin verification states, and on-demand dropship dispatch.
           </p>
         </div>
@@ -346,7 +346,7 @@ export const OrdersPage: React.FC = () => {
       </div>
 
       {/* 4 Stat Cards Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 capitalize">
         <StatCard
           label="TOTAL ORDERS"
           value={totalOrdersCount}
