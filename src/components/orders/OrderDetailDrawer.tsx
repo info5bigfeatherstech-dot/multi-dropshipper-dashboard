@@ -217,7 +217,7 @@ export const OrderDetailDrawer: React.FC = () => {
               <AlertOctagon className="w-5 h-5 shrink-0 text-rose-600 mt-0.5" />
               <div>
                 <p className="font-semibold text-sm">Order Rejected by Admin</p>
-                <p className="mt-1 leading-relaxed">
+                <p className="mt-1 leading-relaxed capitalize">
                   Reason: {order.rejectionReason || order.adminNote || 'Item allocation declined by supplier.'}
                 </p>
               </div>
