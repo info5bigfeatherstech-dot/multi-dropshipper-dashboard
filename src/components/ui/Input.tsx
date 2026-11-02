@@ -7,10 +7,11 @@ export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> 
   helperText?: string;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
+  leftAddon?: React.ReactNode;
 }
 
 export const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, label, error, helperText, leftIcon, rightIcon, id, ...props }, ref) => {
+  ({ className, label, error, helperText, leftIcon, rightIcon, leftAddon, id, ...props }, ref) => {
     const inputId = id || (label ? label.toLowerCase().replace(/\s+/g, '-') : undefined);
 
     return (
@@ -21,30 +22,38 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             {props.required && <span className="text-rose-500 ml-0.5">*</span>}
           </label>
         )}
-        <div className="relative rounded-xl shadow-xs">
-          {leftIcon && (
-            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-              {leftIcon}
-            </div>
+        <div className="relative rounded-xl shadow-xs flex">
+          {leftAddon && (
+            <span className="inline-flex items-center px-3.5 rounded-l-xl border border-r-0 border-slate-200/90 bg-slate-50/90 text-slate-700 text-xs font-bold select-none shrink-0">
+              {leftAddon}
+            </span>
           )}
-          <input
-            ref={ref}
-            id={inputId}
-            className={cn(
-              'block w-full rounded-xl border border-slate-200/90 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 transition duration-150',
-              'focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20',
-              leftIcon && 'pl-10',
-              rightIcon && 'pr-10',
-              error && 'border-rose-400 focus:border-rose-500 focus:ring-rose-500/20 text-rose-900',
-              className
+          <div className="relative flex-1 min-w-0">
+            {leftIcon && (
+              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                {leftIcon}
+              </div>
             )}
-            {...props}
-          />
-          {rightIcon && (
-            <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400">
-              {rightIcon}
-            </div>
-          )}
+            <input
+              ref={ref}
+              id={inputId}
+              className={cn(
+                'block w-full border border-slate-200/90 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 transition duration-150',
+                leftAddon ? 'rounded-r-xl' : 'rounded-xl',
+                'focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20',
+                leftIcon && 'pl-10',
+                rightIcon && 'pr-10',
+                error && 'border-rose-400 focus:border-rose-500 focus:ring-rose-500/20 text-rose-900',
+                className
+              )}
+              {...props}
+            />
+            {rightIcon && (
+              <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400">
+                {rightIcon}
+              </div>
+            )}
+          </div>
         </div>
         {error ? (
           <p className="text-xs text-rose-600 font-medium">{error}</p>
@@ -57,4 +66,3 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
 );
 
 Input.displayName = 'Input';
-

@@ -1,12 +1,10 @@
 import React, { useState } from 'react';
-import { Truck, CheckCircle2, XCircle, Search, Clock, ShieldCheck, ArrowRight, DollarSign } from 'lucide-react';
 import { serviceabilityService } from '../../services/serviceabilityService';
 import type { ServiceabilityCheckResponse } from '../../types/dropshipper';
-import { Button } from '../ui/Button';
-import { Input } from '../ui/Input';
 import { formatCurrency } from '../../lib/utils';
+import { Truck, CheckCircle2, XCircle, Search, Clock, Calendar } from 'lucide-react';
 
-interface AddressServiceabilityCheckerProps {
+export interface AddressServiceabilityCheckerProps {
   initialPincode?: string;
   onSelectCourier?: (courier: any) => void;
   standalone?: boolean;
@@ -14,39 +12,37 @@ interface AddressServiceabilityCheckerProps {
 
 export const AddressServiceabilityChecker: React.FC<AddressServiceabilityCheckerProps> = ({
   initialPincode = '',
-  onSelectCourier,
-  standalone = false,
+  standalone = true,
 }) => {
-  const [pincode, setPincode] = useState(initialPincode);
-  const [warehousePincode, setWarehousePincode] = useState('421004');
-  const [weightKg, setWeightKg] = useState('0.5');
-  const [orderAmount, setOrderAmount] = useState('999');
+  const [customerPin, setCustomerPin] = useState(initialPincode);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<ServiceabilityCheckResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const handleCheck = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!pincode || pincode.trim().length !== 6) {
+    if (!customerPin || customerPin.trim().length !== 6) {
       setError('Please enter a valid 6-digit Indian PIN code');
       return;
     }
 
-    setError(null);
     setLoading(true);
+    setError(null);
+    setResult(null);
 
     try {
-      const res = await serviceabilityService.checkServiceability({
-        customerPincode: pincode.trim(),
-        warehousePincode: warehousePincode.trim(),
-        weightKg: parseFloat(weightKg) || 0.5,
-        orderAmount: parseFloat(orderAmount) || 999,
-        paymentMode: 'both'
+      // POST http://localhost:5174/api/dropshipper/serviceability/check
+      const data = await serviceabilityService.checkServiceability({
+        customerPincode: customerPin.trim(),
+        warehousePincode: '421004',
+        weightKg: 0.5,
+        lengthCm: 10,
+        widthCm: 10,
+        heightCm: 5,
+        paymentMode: 'both',
+        orderAmount: 999
       });
-      setResult(res);
-      if (!res.isDeliverable && res.message) {
-        setError(res.message);
-      }
+      setResult(data);
     } catch (err: any) {
       setError(err.message || 'Serviceability check failed');
     } finally {
@@ -55,7 +51,7 @@ export const AddressServiceabilityChecker: React.FC<AddressServiceabilityChecker
   };
 
   return (
-    <div className={`space-y-6 ${standalone ? 'rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs' : ''}`}>
+    <div className={`space-y-5 ${standalone ? 'p-6 bg-white rounded-2xl border border-slate-200/90 shadow-xs' : ''}`}>
       {standalone && (
         <div className="border-b border-slate-100 pb-4">
           <div className="flex items-center gap-2 text-brand-600 font-semibold text-xs uppercase tracking-wider mb-1">
@@ -64,176 +60,101 @@ export const AddressServiceabilityChecker: React.FC<AddressServiceabilityChecker
           </div>
           <h2 className="text-xl font-bold text-slate-900">Check Pincode Serviceability & Courier Rates</h2>
           <p className="text-xs text-slate-500 mt-1">
-            Simulate real-time air and surface logistics feasibility from warehouse hub to destination pin.
+            Real-time courier deliverability, ETA & lowest freight rates from warehouse to destination pincode.
           </p>
         </div>
       )}
 
-      {/* Input Form */}
-      <form onSubmit={handleCheck} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-end">
-        <div>
-          <Input
-            label="Customer Pincode"
-            placeholder="e.g. 110001 or 400053"
-            value={pincode}
+      {/* Input Form matching implementation */}
+      <form onSubmit={handleCheck} className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1">
+          <input
+            type="text"
             maxLength={6}
-            onChange={(e) => setPincode(e.target.value.replace(/\D/g, ''))}
-            required
-            error={error || undefined}
+            placeholder="Enter 6-digit Customer Pincode (e.g. 110043)"
+            value={customerPin}
+            onChange={(e) => setCustomerPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
+            className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all font-mono"
           />
         </div>
 
-        <div>
-          <Input
-            label="Origin Warehouse Pin"
-            placeholder="e.g. 421004"
-            value={warehousePincode}
-            maxLength={6}
-            onChange={(e) => setWarehousePincode(e.target.value.replace(/\D/g, ''))}
-          />
-        </div>
-
-        <div>
-          <Input
-            label="Shipment Weight (Kg)"
-            type="number"
-            step="0.1"
-            min="0.1"
-            value={weightKg}
-            onChange={(e) => setWeightKg(e.target.value)}
-          />
-        </div>
-
-        <div>
-          <Button
-            type="submit"
-            variant="primary"
-            className="w-full"
-            isLoading={loading}
-            leftIcon={<Search className="w-4 h-4" />}
-          >
-            Check Route
-          </Button>
-        </div>
+        <button
+          type="submit"
+          disabled={loading || customerPin.length !== 6}
+          className="px-6 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white font-semibold text-xs transition-all shadow-xs disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2 shrink-0"
+        >
+          {loading ? (
+            <span>Checking…</span>
+          ) : (
+            <>
+              <Search className="w-3.5 h-3.5" />
+              <span>Check Coverage</span>
+            </>
+          )}
+        </button>
       </form>
 
-      {/* Results Display */}
-      {result && result.isDeliverable && (
-        <div className="space-y-4 pt-2">
-          <div className="flex items-center justify-between p-3.5 rounded-xl bg-emerald-50 border border-emerald-200/60 text-emerald-900 text-xs font-medium">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-              <span>
-                <strong>Serviceable Route!</strong> Pin code <strong>{result.customerPincode}</strong> is eligible for express dispatch.
-              </span>
-            </div>
-            <span className="hidden sm:inline-block font-semibold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded">
-              Standard SLA: {result.estimatedDays}
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Prepaid Courier Card */}
-            {result.quotes.prepaid && (
-              <div className="rounded-2xl border-2 border-brand-200/80 bg-gradient-to-br from-white to-brand-50/20 p-5 shadow-xs relative">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-bold uppercase tracking-wider text-brand-700 bg-brand-50 px-2.5 py-1 rounded-md">
-                    Prepaid Dispatch
-                  </span>
-                  <span className="text-lg font-bold text-slate-900">
-                    {formatCurrency(result.quotes.prepaid.deliveryCharges)}
-                  </span>
-                </div>
-
-                <div className="space-y-2 text-xs text-slate-600">
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">Carrier Partner:</span>
-                    <span className="font-semibold text-slate-800">{result.quotes.prepaid.courierName}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">Base Freight:</span>
-                    <span className="font-medium text-slate-800">{formatCurrency(result.quotes.prepaid.freightInr)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">COD Collection Fee:</span>
-                    <span className="font-medium text-emerald-600">₹0 (Waived)</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">Transit TAT:</span>
-                    <span className="font-semibold text-slate-800">{result.quotes.prepaid.estimatedDays}</span>
-                  </div>
-                </div>
-
-                {onSelectCourier && (
-                  <Button
-                    variant="soft"
-                    size="sm"
-                    className="w-full mt-4"
-                    onClick={() => onSelectCourier(result.quotes.prepaid)}
-                  >
-                    Select Prepaid Route
-                  </Button>
-                )}
-              </div>
-            )}
-
-            {/* COD Courier Card */}
-            {result.quotes.cod && (
-              <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs relative">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-bold uppercase tracking-wider text-amber-700 bg-amber-50 px-2.5 py-1 rounded-md">
-                    Cash On Delivery (COD)
-                  </span>
-                  <span className="text-lg font-bold text-slate-900">
-                    {formatCurrency(result.quotes.cod.deliveryCharges)}
-                  </span>
-                </div>
-
-                <div className="space-y-2 text-xs text-slate-600">
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">Carrier Partner:</span>
-                    <span className="font-semibold text-slate-800">{result.quotes.cod.courierName}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">Base Freight:</span>
-                    <span className="font-medium text-slate-800">{formatCurrency(result.quotes.cod.freightInr)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">COD Surcharge:</span>
-                    <span className="font-medium text-amber-700">+{formatCurrency(result.quotes.cod.codFeeInr)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">Transit TAT:</span>
-                    <span className="font-semibold text-slate-800">{result.quotes.cod.estimatedDays}</span>
-                  </div>
-                </div>
-
-                {onSelectCourier && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full mt-4"
-                    onClick={() => onSelectCourier(result.quotes.cod)}
-                  >
-                    Select COD Route
-                  </Button>
-                )}
-              </div>
-            )}
-          </div>
+      {error && (
+        <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2">
+          <XCircle className="w-4 h-4 shrink-0 text-rose-600" />
+          <span>{error}</span>
         </div>
       )}
 
-      {result && !result.isDeliverable && (
-        <div className="p-4 rounded-xl bg-rose-50 border border-rose-200/70 text-rose-800 text-xs flex items-center gap-3">
-          <XCircle className="w-5 h-5 text-rose-600 shrink-0" />
-          <div>
-            <h5 className="font-bold text-rose-900">Unserviceable Pincode</h5>
-            <p className="mt-0.5">The postal code entered ({result.customerPincode}) is currently outside courier express dispatch zones.</p>
+      {/* Results Display */}
+      {result && (
+        <div className="mt-4 p-5 rounded-2xl bg-slate-50/70 border border-slate-200 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              {result.isDeliverable ? (
+                <div className="w-7 h-7 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                </div>
+              ) : (
+                <div className="w-7 h-7 rounded-full bg-rose-100 text-rose-700 flex items-center justify-center shrink-0">
+                  <XCircle className="w-4 h-4 text-rose-600" />
+                </div>
+              )}
+              <span className={result.isDeliverable ? 'text-emerald-700 font-bold text-sm' : 'text-rose-700 font-bold text-sm'}>
+                {result.isDeliverable ? `✓ Delivery Available to ${result.customerPincode}` : `✗ Delivery Not Available to ${result.customerPincode}`}
+              </span>
+            </div>
+
+            <span className="text-xs text-slate-500 font-medium">
+              TAT: <strong className="text-slate-800">{result.estimatedDays} Days</strong>
+            </span>
           </div>
+
+          {result.isDeliverable && result.quotes && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+              <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-2xs space-y-1">
+                <span className="text-xs font-semibold text-slate-400 block uppercase tracking-wider">
+                  Prepaid Delivery
+                </span>
+                <span className="text-xl font-extrabold text-slate-900 block">
+                  {formatCurrency(result.quotes.prepaid?.deliveryCharges ?? result.deliveryCharges)}
+                </span>
+                <p className="text-[11px] text-slate-500">
+                  {result.quotes.prepaid?.courierName || 'Surface Express'}
+                </p>
+              </div>
+
+              <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-2xs space-y-1">
+                <span className="text-xs font-semibold text-slate-400 block uppercase tracking-wider">
+                  COD Total (Freight + Fee)
+                </span>
+                <span className="text-xl font-extrabold text-slate-900 block">
+                  {formatCurrency(result.quotes.cod?.deliveryCharges ?? result.deliveryCharges + 15)}
+                </span>
+                <p className="text-[11px] text-slate-500">
+                  {result.quotes.cod?.courierName || 'Express COD Carrier'}
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
   );
 };
-
+export default AddressServiceabilityChecker;

@@ -18,10 +18,11 @@ import { dropshipperAuthService, type RegisterStartInput } from '../../services/
 import type { SubscriptionSettings, RegistrationStatusResponse } from '../../types/dropshipper';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
-import { loadRazorpayScript } from '../../utils/razorpay';
+import { openRazorpayCheckout } from '../../utils/razorpay';
 import { formatCurrency } from '../../lib/utils';
 import { useAppDispatch } from '../../store/hooks';
 import { addToast } from '../../store/slices/uiSlice';
+import { validateEmail, validatePhone } from '../../utils/validation';
 
 export const RegisterPage: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -68,12 +69,36 @@ export const RegisterPage: React.FC = () => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  // Validation state
+  const [fieldErrors, setFieldErrors] = useState<{ email?: string; phone?: string }>({});
+
   const handleApplySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.fullName || !form.email || !form.phone || !form.businessName) {
       dispatch(addToast({ type: 'warning', title: 'Missing Information', message: 'Please complete all required fields.' }));
       return;
     }
+
+    // Strict regex validation
+    const emailErr = validateEmail(form.email, true);
+    const phoneErr = validatePhone(form.phone, true);
+
+    if (emailErr || phoneErr) {
+      setFieldErrors({
+        email: emailErr || undefined,
+        phone: phoneErr || undefined
+      });
+      dispatch(
+        addToast({
+          type: 'warning',
+          title: 'Validation Error',
+          message: emailErr || phoneErr || 'Please check email and phone formats.'
+        })
+      );
+      return;
+    }
+
+    setFieldErrors({});
 
     setSubmitting(true);
     try {
@@ -89,38 +114,23 @@ export const RegisterPage: React.FC = () => {
       const { requestId, razorpay } = paymentInit;
       setCreatedRequestId(requestId);
 
-      // Step 3: Open Razorpay Modal
-      await loadRazorpayScript();
-
-      if (!window.Razorpay) {
-        throw new Error('Razorpay SDK failed to load. Please verify your connection.');
-      }
-
-      const options = {
-        key: razorpay.keyId,
-        amount: razorpay.amount,
-        currency: razorpay.currency || 'INR',
-        name: 'DropFlow Logistics Network',
-        description: 'Annual Partner Verification & Sourcing Access',
-        order_id: razorpay.orderId,
-        prefill: {
-          name: form.fullName,
-          email: form.email,
-          contact: form.phone
-        },
-        theme: {
-          color: '#4F46E5'
-        },
-        handler: async (response: any) => {
-          try {
-            // Step 4: Verify signature
-            const verifyRes = await dropshipperAuthService.verifyRegistrationPayment({
-              requestId,
-              razorpay_order_id: response.razorpay_order_id || razorpay.orderId,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature || 'simulated_sig'
-            });
-
+      // Step 3: Open Razorpay Modal via openRazorpayCheckout
+      await openRazorpayCheckout(
+        {
+          keyId: razorpay.keyId,
+          orderId: razorpay.orderId,
+          internalOrderId: requestId,
+          amount: razorpay.amount,
+          currency: razorpay.currency || 'INR',
+          name: 'DropFlow Logistics Network',
+          description: 'Annual Partner Verification & Sourcing Access',
+          prefill: {
+            name: form.fullName,
+            email: form.email,
+            contact: form.phone
+          },
+          onSuccess: (verifyRes) => {
+            setSubmitting(false);
             // Trigger confetti
             confetti({
               particleCount: 120,
@@ -129,28 +139,29 @@ export const RegisterPage: React.FC = () => {
             });
 
             setPaymentSuccess(true);
-            dispatch(addToast({
-              type: 'success',
-              title: 'Application Submitted!',
-              message: verifyRes.message || 'Payment received. Application queued for KYC approval.'
-            }));
-          } catch (err: any) {
-            dispatch(addToast({ type: 'error', title: 'Payment Verification Error', message: err.message }));
+            dispatch(
+              addToast({
+                type: 'success',
+                title: 'Application Submitted!',
+                message: verifyRes?.message || 'Payment received. Application queued for KYC approval.'
+              })
+            );
+          },
+          onError: (err) => {
+            setSubmitting(false);
+            dispatch(
+              addToast({
+                type: 'error',
+                title: 'Payment Error',
+                message: err?.message || 'Payment cancelled or verification failed.'
+              })
+            );
           }
         },
-        modal: {
-          ondismiss: () => {
-            dispatch(addToast({ type: 'info', title: 'Payment Window Closed', message: 'You can retry payment whenever ready.' }));
-            setSubmitting(false);
-          }
-        }
-      };
-
-      const rzpInstance = new window.Razorpay(options);
-      rzpInstance.open();
+        dropshipperAuthService.verifyRegistrationPayment
+      );
     } catch (err: any) {
       dispatch(addToast({ type: 'error', title: 'Registration Failed', message: err.message || 'Something went wrong.' }));
-    } finally {
       setSubmitting(false);
     }
   };
@@ -309,7 +320,19 @@ export const RegisterPage: React.FC = () => {
                     name="email"
                     placeholder="rahul@business.com"
                     value={form.email}
-                    onChange={handleChange}
+                    onChange={(e) => {
+                      handleChange(e);
+                      if (fieldErrors.email) {
+                        const err = validateEmail(e.target.value, true);
+                        setFieldErrors((prev) => ({ ...prev, email: err || undefined }));
+                      }
+                    }}
+                    onBlur={() => {
+                      const err = validateEmail(form.email, true);
+                      setFieldErrors((prev) => ({ ...prev, email: err || undefined }));
+                    }}
+                    error={fieldErrors.email}
+                    helperText={!fieldErrors.email ? 'Verification & activation OTP will be sent here' : undefined}
                     required
                   />
 
@@ -317,9 +340,32 @@ export const RegisterPage: React.FC = () => {
                     label="Phone Number"
                     type="tel"
                     name="phone"
-                    placeholder="+91 98765 43210"
+                    maxLength={10}
+                    placeholder="98765 43210"
+                    leftAddon={
+                      <span className="flex items-center gap-1.5 font-bold text-slate-700 font-mono">
+                        <span>🇮🇳</span>
+                        <span>+91</span>
+                      </span>
+                    }
                     value={form.phone}
-                    onChange={handleChange}
+                    onChange={(e) => {
+                      let clean = e.target.value.replace(/\D/g, '');
+                      if (clean.startsWith('91') && clean.length > 10) clean = clean.slice(2);
+                      else if (clean.startsWith('0') && clean.length > 10) clean = clean.slice(1);
+                      clean = clean.slice(0, 10);
+                      setForm((prev) => ({ ...prev, phone: clean }));
+                      if (fieldErrors.phone) {
+                        const err = validatePhone(clean, true);
+                        setFieldErrors((prev) => ({ ...prev, phone: err || undefined }));
+                      }
+                    }}
+                    onBlur={() => {
+                      const err = validatePhone(form.phone, true);
+                      setFieldErrors((prev) => ({ ...prev, phone: err || undefined }));
+                    }}
+                    error={fieldErrors.phone}
+                    helperText={!fieldErrors.phone ? 'Enter 10-digit mobile number' : undefined}
                     required
                   />
 

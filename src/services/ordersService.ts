@@ -1,5 +1,6 @@
 import { apiFetch } from '../lib/api';
 import type { Order, OrderStatus, Customer, Address, OrderItem, OrderTimelineEvent } from '../types/dropshipper';
+import { sanitizeOrderAddress, cleanPersonFullName, cleanPhoneNumber } from '../utils/validation';
 
 export interface OrderItemInput {
   productId?: string;
@@ -36,21 +37,39 @@ export interface CreateOrderInput {
   items: OrderItemInput[];
   customer: {
     name: string;
+    fullName?: string;
     email: string;
     phone: string;
+    houseNumber?: string;
+    building?: string;
+    area?: string;
+    landmark?: string;
+    addressLine1?: string;
+    addressLine2?: string;
   };
+  address?: Record<string, any>;
   shippingAddress: {
+    houseNumber?: string;
+    building?: string;
+    area?: string;
+    landmark?: string;
+    addressLine1?: string;
+    addressLine2?: string;
     line1: string;
     line2?: string;
     city: string;
     state: string;
     postalCode: string;
     country: string;
+    fullName?: string;
+    name?: string;
+    phone?: string;
   };
   customerPincode: string;
   warehousePincode?: string;
   paymentMethod: 'online' | 'cod';
   notes?: string;
+  dropshipRef?: string;
 }
 
 export interface CreateOrderResponse {
@@ -534,19 +553,94 @@ export const ordersService = {
   },
 
   /**
-   * POST /orders
+   * POST /orders or /api/dropshipper/orders
    * Submit order & receive Razorpay payment payload
    */
   async createOrder(input: CreateOrderInput): Promise<CreateOrderResponse> {
+    // 1. Sanitize address fields to strictly satisfy backend validatePhysicalAddressForSave
+    const addr = sanitizeOrderAddress({
+      houseNumber: input.shippingAddress?.houseNumber || input.customer?.houseNumber,
+      building: input.shippingAddress?.building || input.customer?.building,
+      area: input.shippingAddress?.area || input.customer?.area,
+      landmark: input.shippingAddress?.landmark || input.shippingAddress?.line2,
+      line1: input.shippingAddress?.line1 || input.shippingAddress?.addressLine1,
+      line2: input.shippingAddress?.line2 || input.shippingAddress?.addressLine2,
+      city: input.shippingAddress?.city,
+      state: input.shippingAddress?.state,
+      postalCode: input.customerPincode || input.shippingAddress?.postalCode,
+      country: input.shippingAddress?.country
+    });
+
+    const cleanName = cleanPersonFullName(input.customer.fullName || input.customer.name);
+    const cleanPhone = cleanPhoneNumber(input.customer.phone);
+
+    const structuredPayload = {
+      ...input,
+      customer: {
+        ...input.customer,
+        name: cleanName,
+        fullName: cleanName,
+        phone: cleanPhone,
+        houseNumber: addr.houseNumber,
+        building: addr.building,
+        area: addr.area,
+        landmark: addr.landmark,
+        addressLine1: addr.addressLine1,
+        addressLine2: addr.addressLine2,
+        city: addr.city,
+        state: addr.state,
+        postalCode: addr.postalCode
+      },
+      address: {
+        fullName: cleanName,
+        name: cleanName,
+        phone: cleanPhone,
+        houseNumber: addr.houseNumber,
+        building: addr.building,
+        area: addr.area,
+        landmark: addr.landmark,
+        addressLine1: addr.addressLine1,
+        addressLine2: addr.addressLine2,
+        line1: addr.line1,
+        line2: addr.line2,
+        city: addr.city,
+        state: addr.state,
+        postalCode: addr.postalCode,
+        pincode: addr.postalCode,
+        country: addr.country
+      },
+      shippingAddress: {
+        ...input.shippingAddress,
+        fullName: cleanName,
+        name: cleanName,
+        phone: cleanPhone,
+        houseNumber: addr.houseNumber,
+        building: addr.building,
+        area: addr.area,
+        landmark: addr.landmark,
+        addressLine1: addr.addressLine1,
+        addressLine2: addr.addressLine2,
+        line1: addr.line1,
+        line2: addr.line2,
+        city: addr.city,
+        state: addr.state,
+        postalCode: addr.postalCode,
+        country: addr.country
+      },
+      customerPincode: addr.postalCode,
+      warehousePincode: input.warehousePincode || '421004',
+      paymentMethod: 'online'
+    };
+
     try {
-      let res = await apiFetch('/orders', {
+      let res = await apiFetch('/api/dropshipper/orders', {
         method: 'POST',
-        body: JSON.stringify(input)
+        body: JSON.stringify(structuredPayload)
       });
       if (!res.ok) {
-        res = await apiFetch('/api/dropshipper/orders', {
+        res = await apiFetch('/orders', {
           method: 'POST',
-          body: JSON.stringify(input)
+          body: JSON.stringify(structuredPayload)
         });
       }
       if (res.ok) {
@@ -559,7 +653,8 @@ export const ordersService = {
         };
       }
       const errJson = await res.json().catch(() => ({}));
-      throw new Error(errJson.message || 'Failed to submit order');
+      const detailedMsg = errJson.details?.errors?.map((e: any) => e.message).join(' ') || errJson.message || 'Failed to submit order';
+      throw new Error(detailedMsg);
     } catch (err: any) {
       if (err.message && !err.message.includes('fetch')) throw err;
 
