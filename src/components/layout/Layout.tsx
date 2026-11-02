@@ -32,6 +32,22 @@ import { ToastContainer } from '../ui/ToastContainer';
 import { cn } from '../../lib/utils';
 import { Badge } from '../ui/Badge';
 
+const isNavItemActive = (pathname: string, targetPath: string): boolean => {
+  if (targetPath === '/orders') {
+    // Only active on /orders or specific order detail view (e.g. /orders/OWB-DS-1234)
+    // NOT on sibling subroutes like /orders/create or /orders/serviceability
+    if (pathname === '/orders') return true;
+    if (pathname.startsWith('/orders/create') || pathname.startsWith('/orders/serviceability')) {
+      return false;
+    }
+    return pathname.startsWith('/orders/');
+  }
+  if (targetPath === '/products') {
+    return pathname === '/products' || pathname.startsWith('/products/');
+  }
+  return pathname === targetPath;
+};
+
 export const Layout: React.FC = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -121,7 +137,7 @@ export const Layout: React.FC = () => {
             )}
 
             {navItems.map((item) => {
-              const isActive = location.pathname === item.to || (item.to !== '/products' && location.pathname.startsWith(item.to));
+              const isActive = isNavItemActive(location.pathname, item.to);
               return (
                 <NavLink
                   key={item.to}
@@ -158,22 +174,7 @@ export const Layout: React.FC = () => {
             })}
           </div>
 
-          {/* Quick Wallet / Tier Preview */}
-          {!sidebarCollapsed && (
-            <div className="p-4 mx-3 mb-4 rounded-2xl bg-gradient-to-br from-indigo-50/70 to-slate-50 border border-brand-100/60">
-              <div className="flex items-center justify-between text-xs text-brand-900 font-medium mb-1">
-                <span className="flex items-center gap-1.5">
-                  <CreditCard className="w-3.5 h-3.5 text-brand-600" />
-                  Fulfillment Credit
-                </span>
-                <span className="text-[10px] bg-emerald-100 text-emerald-800 font-semibold px-1.5 py-0.5 rounded">
-                  Active
-                </span>
-              </div>
-              <div className="text-lg font-bold text-slate-900">₹{((user?.walletBalance || 25000)).toLocaleString('en-IN')}</div>
-              <p className="text-[11px] text-slate-500 mt-0.5">Prepaid dispatch balance ready</p>
-            </div>
-          )}
+  
 
           {/* User profile footer & collapse trigger */}
           <div className="p-3 border-t border-slate-100 flex items-center justify-between gap-2">
@@ -243,7 +244,7 @@ export const Layout: React.FC = () => {
 
           <div className="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto">
             {navItems.map((item) => {
-              const isActive = location.pathname === item.to || (item.to !== '/products' && location.pathname.startsWith(item.to));
+              const isActive = isNavItemActive(location.pathname, item.to);
               return (
                 <NavLink
                   key={item.to}
