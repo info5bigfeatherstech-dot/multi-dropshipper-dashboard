@@ -105,7 +105,7 @@ export const LoginPage: React.FC = () => {
                   defaultChecked
                   className="rounded border-slate-300 text-brand-600 focus:ring-brand-500"
                 />
-                Remember this terminal
+                Remember Me
               </label>
               <Link to="/activate" className="font-semibold text-brand-600 hover:text-brand-500">
                 Activate Account?
@@ -133,15 +133,6 @@ export const LoginPage: React.FC = () => {
               <span className="bg-white px-3 text-slate-400 font-semibold tracking-wider">Or</span>
             </div>
           </div>
-
-          <button
-            type="button"
-            onClick={handleDemoSignIn}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-dashed border-brand-300 bg-brand-50/50 hover:bg-brand-50 text-brand-700 text-xs font-semibold transition-colors"
-          >
-            <Sparkles className="w-4 h-4 text-brand-600" />
-            Explore Dashboard as Demo Partner (One-Click)
-          </button>
 
           <div className="text-center pt-2 border-t border-slate-100">
             <p className="text-xs text-slate-500">
