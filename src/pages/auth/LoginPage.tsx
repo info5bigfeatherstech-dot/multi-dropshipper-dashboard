@@ -61,7 +61,7 @@ export const LoginPage: React.FC = () => {
             <Package className="w-7 h-7" />
           </div>
         </div>
-        <h2 className="mt-4 text-center text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+        <h2 className="mt-4 text-center text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
           DropFlow Partner Portal
         </h2>
         <p className="mt-1 text-center text-xs sm:text-sm text-slate-500">
