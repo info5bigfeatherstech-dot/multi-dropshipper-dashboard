@@ -15,10 +15,10 @@ export const ServiceabilityPage: React.FC = () => {
           <Truck className="w-3.5 h-3.5" />
           Domestic Carrier Intelligence
         </div>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
           Pan-India Logistics & Pincode Serviceability
         </h1>
-        <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+        <p className="text-xs sm:text-sm text-slate-500 mt-0.5 capitalize">
           Simulate courier freight rates, check COD eligibility, and inspect transit SLAs across 28,000+ Indian postal codes.
         </p>
       </div>
@@ -33,7 +33,7 @@ export const ServiceabilityPage: React.FC = () => {
             <Clock className="w-4 h-4" />
           </div>
           <h3 className="text-sm font-bold text-slate-900">Tier-1 Metro Transit SLAs</h3>
-          <p className="text-xs text-slate-500 leading-relaxed">
+          <p className="text-xs text-slate-500 leading-relaxed capitalize">
             Metros including Mumbai, Delhi NCR, Bengaluru, Hyderabad, and Chennai enjoy 24-48 hour air courier priority dispatches.
           </p>
         </div>
@@ -43,7 +43,7 @@ export const ServiceabilityPage: React.FC = () => {
             <ShieldCheck className="w-4 h-4" />
           </div>
           <h3 className="text-sm font-bold text-slate-900">Pan-India COD Collection</h3>
-          <p className="text-xs text-slate-500 leading-relaxed">
+          <p className="text-xs text-slate-500 leading-relaxed capitalize">
             Verified cash on delivery network powered by Delhivery and BlueDart with automated remittance cycles and real-time OTP handovers.
           </p>
         </div>
@@ -53,7 +53,7 @@ export const ServiceabilityPage: React.FC = () => {
             <Layers className="w-4 h-4" />
           </div>
           <h3 className="text-sm font-bold text-slate-900">Volumetric Weight Slabs</h3>
-          <p className="text-xs text-slate-500 leading-relaxed">
+          <p className="text-xs text-slate-500 leading-relaxed capitalize">
             Shipments are rated per 500g dead weight slab. Compact packaging optimization minimizes dead space to reduce your freight overheads.
           </p>
         </div>
@@ -62,8 +62,8 @@ export const ServiceabilityPage: React.FC = () => {
       {/* Direct Order CTA Banner */}
       <div className="rounded-3xl border border-brand-200/80 bg-gradient-to-r from-brand-600 to-indigo-600 p-6 sm:p-8 text-white shadow-lg flex flex-col sm:flex-row items-center justify-between gap-6">
         <div>
-          <h3 className="text-lg sm:text-xl font-bold">Ready to dispatch customer inventory?</h3>
-          <p className="text-xs sm:text-sm text-indigo-100 mt-1 max-w-xl">
+          <h3 className="text-lg sm:text-xl font-bold capitalize">Ready to dispatch customer inventory?</h3>
+          <p className="text-xs sm:text-sm text-indigo-100 mt-1 max-w-xl capitalize">
             Book a direct single-unit or bulk shipment right now through our simplified seller terminal.
           </p>
         </div>

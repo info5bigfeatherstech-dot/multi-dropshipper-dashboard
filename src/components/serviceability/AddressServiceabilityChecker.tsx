@@ -59,7 +59,7 @@ export const AddressServiceabilityChecker: React.FC<AddressServiceabilityChecker
             Domestic Logistics Intelligence
           </div>
           <h2 className="text-xl font-bold text-slate-900">Check Pincode Serviceability & Courier Rates</h2>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-slate-500 mt-1 capitalize">
             Real-time courier deliverability, ETA & lowest freight rates from warehouse to destination pincode.
           </p>
         </div>

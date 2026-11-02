@@ -19,10 +19,10 @@ export const CreateOrderPage: React.FC = () => {
           <Package className="w-3.5 h-3.5" />
           Direct Dropship Order Terminal
         </div>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
           Create New Dropship Order
         </h1>
-        <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+        <p className="text-xs sm:text-sm text-slate-500 mt-0.5 capitalize">
           Select single or multiple products, enter customer shipping details, compute live express freight, and trigger direct factory dispatch.
         </p>
       </div>
