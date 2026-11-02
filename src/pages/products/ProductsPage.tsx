@@ -26,6 +26,13 @@ import { ProductCard } from '../../components/products/ProductCard';
 import { ProductListItem } from '../../components/products/ProductListItem';
 import { ProductDetailModal } from '../../components/products/ProductDetailModal';
 import { Button } from '../../components/ui/Button';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem
+} from '../../components/ui/select';
 
 export const ProductsPage: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -56,16 +63,6 @@ export const ProductsPage: React.FC = () => {
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    dispatch(fetchProducts());
-  };
-
-  const handleStockChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    dispatch(setStockFilter(e.target.value));
-    dispatch(fetchProducts());
-  };
-
-  const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    dispatch(setSortBy(e.target.value));
     dispatch(fetchProducts());
   };
 
@@ -117,35 +114,53 @@ export const ProductsPage: React.FC = () => {
           </form>
 
           {/* Controls: Stock filter, Sort, and Grid/List View switcher */}
-          <div className="flex items-center gap-2 w-full md:w-auto justify-end flex-wrap">
-            {/* Stock Filter */}
-            <div className="flex items-center gap-1.5 text-xs">
-              <Filter className="w-3.5 h-3.5 text-slate-400" />
-              <select
+          <div className="flex items-center gap-2.5 w-full md:w-auto justify-end flex-wrap">
+            {/* Stock Filter using shadcn Select */}
+            <div className="w-36 sm:w-44">
+              <Select
                 value={stockFilter}
-                onChange={handleStockChange}
-                className="rounded-xl border border-slate-200/90 bg-white py-2 px-3 text-xs font-medium text-slate-700 focus:border-brand-500 focus:outline-none"
+                onValueChange={(val: any) => {
+                  dispatch(setStockFilter(val));
+                  dispatch(fetchProducts());
+                }}
               >
-                <option value="all">All Inventory</option>
-                <option value="in_stock">In Stock (&gt;5)</option>
-                <option value="low_stock">Low Stock (1-5)</option>
-                <option value="out_of_stock">Out of Stock</option>
-              </select>
+                <SelectTrigger className="h-9 rounded-xl text-xs bg-white">
+                  <div className="flex items-center gap-1.5 truncate">
+                    <Filter className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                    <SelectValue placeholder="All Inventory" />
+                  </div>
+                </SelectTrigger>
+                <SelectContent className="bg-white">
+                  <SelectItem value="all">All Inventory</SelectItem>
+                  <SelectItem value="in_stock">In Stock (&gt;5)</SelectItem>
+                  <SelectItem value="low_stock">Low Stock (1-5)</SelectItem>
+                  <SelectItem value="out_of_stock">Out of Stock</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
-            {/* Sort Dropdown */}
-            <div className="flex items-center gap-1.5 text-xs">
-              <ArrowUpDown className="w-3.5 h-3.5 text-slate-400" />
-              <select
+            {/* Sort Dropdown using shadcn Select */}
+            <div className="w-40 sm:w-48">
+              <Select
                 value={sortBy}
-                onChange={handleSortChange}
-                className="rounded-xl border border-slate-200/90 bg-white py-2 px-3 text-xs font-medium text-slate-700 focus:border-brand-500 focus:outline-none"
+                onValueChange={(val: any) => {
+                  dispatch(setSortBy(val));
+                  dispatch(fetchProducts());
+                }}
               >
-                <option value="featured">Featured Relevance</option>
-                <option value="price_asc">Price: Low to High</option>
-                <option value="price_desc">Price: High to Low</option>
-                <option value="rating">Highest Rated</option>
-              </select>
+                <SelectTrigger className="h-9 rounded-xl text-xs bg-white">
+                  <div className="flex items-center gap-1.5 truncate">
+                    <ArrowUpDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                    <SelectValue placeholder="Featured Relevance" />
+                  </div>
+                </SelectTrigger>
+                <SelectContent className="bg-white">
+                  <SelectItem value="featured">Featured Relevance</SelectItem>
+                  <SelectItem value="price_asc">Price: Low to High</SelectItem>
+                  <SelectItem value="price_desc">Price: High to Low</SelectItem>
+                  <SelectItem value="rating">Highest Rated</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {/* View Switcher */}

@@ -14,8 +14,17 @@ import {
   User,
   ShieldCheck,
   Search,
-  ExternalLink
+  ExternalLink,
+  ChevronDown
 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator
+} from '../ui/dropdown-menu';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { toggleSidebar, setMobileMenuOpen, addToast } from '../../store/slices/uiSlice';
 import { logoutThunk } from '../../store/slices/authSlice';
@@ -30,8 +39,6 @@ export const Layout: React.FC = () => {
 
   const { sidebarCollapsed, mobileMenuOpen } = useAppSelector((state) => state.ui);
   const { user } = useAppSelector((state) => state.auth);
-
-  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
 
   const navItems = [
     {
@@ -311,57 +318,55 @@ export const Layout: React.FC = () => {
 
               <div className="h-5 w-px bg-slate-200" />
 
-              {/* User Dropdown */}
-              <div className="relative">
-                <button
-                  onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                  className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-slate-100 transition-colors"
-                >
-                  <div className="w-8 h-8 rounded-full bg-brand-100 text-brand-700 font-bold text-xs flex items-center justify-center">
-                    {user?.fullName?.charAt(0) || 'S'}
-                  </div>
-                  <span className="text-xs font-semibold text-slate-700 hidden md:inline truncate max-w-[120px]">
-                    {user?.businessName || user?.fullName || 'Seller Store'}
-                  </span>
-                </button>
-
-                {userDropdownOpen && (
-                  <div
-                    className="absolute right-0 mt-2 w-56 rounded-2xl bg-white border border-slate-200/90 shadow-xl py-2 z-50 text-xs"
-                    onClick={() => setUserDropdownOpen(false)}
+              {/* User Dropdown using shadcn DropdownMenu */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-500"
                   >
-                    <div className="px-4 py-2 border-b border-slate-100">
-                      <p className="font-semibold text-slate-900">{user?.fullName || 'Dropshipper'}</p>
-                      <p className="text-slate-400 text-[11px] truncate">{user?.email || 'seller@dropflow.in'}</p>
+                    <div className="w-8 h-8 rounded-full bg-brand-100 text-brand-700 font-bold text-xs flex items-center justify-center">
+                      {user?.fullName?.charAt(0) || 'S'}
                     </div>
-                    <div className="px-2 py-1">
-                      <button
-                        onClick={() => navigate('/orders')}
-                        className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-slate-700 hover:bg-slate-50 transition-colors text-left"
-                      >
-                        <ShoppingBag className="w-4 h-4 text-slate-400" />
-                        My Orders
-                      </button>
-                      <button
-                        onClick={() => navigate('/orders/serviceability')}
-                        className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-slate-700 hover:bg-slate-50 transition-colors text-left"
-                      >
-                        <Truck className="w-4 h-4 text-slate-400" />
-                        Logistics Checker
-                      </button>
-                    </div>
-                    <div className="border-t border-slate-100 px-2 pt-1">
-                      <button
-                        onClick={handleLogout}
-                        className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-rose-600 hover:bg-rose-50 transition-colors text-left font-medium"
-                      >
-                        <LogOut className="w-4 h-4" />
-                        Sign Out
-                      </button>
-                    </div>
+                    <span className="text-xs font-semibold text-slate-700 hidden md:inline truncate max-w-[120px]">
+                      {user?.businessName || user?.fullName || 'Seller Store'}
+                    </span>
+                    <ChevronDown className="w-3.5 h-3.5 text-slate-400 hidden md:inline" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="end"
+                  className="w-56 bg-white shadow-xl rounded-2xl p-1.5 border border-slate-200"
+                >
+                  <div className="px-3 py-2 border-b border-slate-100">
+                    <p className="font-semibold text-xs text-slate-900">{user?.fullName || 'Dropshipper'}</p>
+                    <p className="text-slate-400 text-[11px] truncate">{user?.email || 'seller@dropflow.in'}</p>
                   </div>
-                )}
-              </div>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => navigate('/orders')}
+                    className="cursor-pointer flex items-center gap-2 px-3 py-2 rounded-xl text-xs"
+                  >
+                    <ShoppingBag className="w-4 h-4 text-slate-400" />
+                    <span>My Orders</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => navigate('/orders/serviceability')}
+                    className="cursor-pointer flex items-center gap-2 px-3 py-2 rounded-xl text-xs"
+                  >
+                    <Truck className="w-4 h-4 text-slate-400" />
+                    <span>Logistics Checker</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={handleLogout}
+                    className="cursor-pointer flex items-center gap-2 px-3 py-2 rounded-xl text-xs text-rose-600 focus:text-rose-600 focus:bg-rose-50"
+                  >
+                    <LogOut className="w-4 h-4 text-rose-500" />
+                    <span className="font-medium">Sign Out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </header>
 

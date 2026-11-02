@@ -1,8 +1,16 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Truck, Check, CheckCircle2, Clock, Calendar, SlidersHorizontal, Loader2 } from 'lucide-react';
+import { Truck, Check, CheckCircle2, Clock, Calendar, SlidersHorizontal, Loader2, ChevronDown } from 'lucide-react';
 import { serviceabilityService } from '../../services/serviceabilityService';
 import { formatCurrency } from '../../lib/utils';
 import type { ServiceabilityCheckResponse } from '../../types/dropshipper';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator
+} from '../ui/dropdown-menu';
 
 export interface ShippingRatesCardProps {
   initialPincode?: string;
@@ -21,7 +29,7 @@ export interface ShippingRatesCardProps {
 }
 
 export const ShippingRatesCard: React.FC<ShippingRatesCardProps> = ({
-  initialPincode = '110043',
+  initialPincode = '',
   pincode: controlledPincode,
   onPincodeChange,
   weightKg = 0.5,
@@ -30,12 +38,12 @@ export const ShippingRatesCard: React.FC<ShippingRatesCardProps> = ({
   className = '',
   hideHeader = false
 }) => {
-  const [internalPincode, setInternalPincode] = useState(controlledPincode || initialPincode);
-  const activePincode = controlledPincode !== undefined ? controlledPincode : internalPincode;
+  const [internalPincode, setInternalPincode] = useState(controlledPincode || initialPincode || '');
+  const activePincode = controlledPincode !== undefined ? (controlledPincode || '') : internalPincode;
 
   const [selectedWeight, setSelectedWeight] = useState(weightKg);
   const [isLoading, setIsLoading] = useState(false);
-  const [hasChecked, setHasChecked] = useState(true);
+  const [hasChecked, setHasChecked] = useState(Boolean(activePincode && activePincode.length === 6));
   const [isDeliverable, setIsDeliverable] = useState(true);
   const [courierName, setCourierName] = useState('Xpressbees Surface');
   const [freightCharge, setFreightCharge] = useState(48.72);
@@ -55,12 +63,13 @@ export const ShippingRatesCard: React.FC<ShippingRatesCardProps> = ({
     return `Arrives by ${weekday}, ${day} ${month}`;
   }, [transitDays]);
 
-  const runCheck = useCallback(async (pinToCheck: string) => {
+  const runCheck = useCallback(async (pinToCheck: string, weightOverride?: number) => {
     const cleanPin = (pinToCheck || '').trim();
     if (!/^\d{6}$/.test(cleanPin)) {
       return;
     }
 
+    const weightToUse = weightOverride !== undefined ? weightOverride : selectedWeight;
     lastCheckedPinRef.current = cleanPin;
     setIsLoading(true);
     setErrorMessage(null);
@@ -70,7 +79,7 @@ export const ShippingRatesCard: React.FC<ShippingRatesCardProps> = ({
       const res: ServiceabilityCheckResponse = await serviceabilityService.checkServiceability({
         customerPincode: cleanPin,
         warehousePincode: '421004',
-        weightKg: selectedWeight,
+        weightKg: weightToUse,
         lengthCm: 10,
         widthCm: 10,
         heightCm: 5,
@@ -189,13 +198,58 @@ export const ShippingRatesCard: React.FC<ShippingRatesCardProps> = ({
             </div>
           </div>
 
-          {/* Package Weight Pill Dropdown */}
+          {/* Package Weight Pill Dropdown using shadcn UI */}
           <div className="relative shrink-0">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50/70 text-slate-700 text-xs font-semibold shadow-2xs">
-              <SlidersHorizontal className="w-3.5 h-3.5 text-slate-400" />
-              <span>Package ({selectedWeight}kg)</span>
-              <span className="text-[10px] text-slate-400">˅</span>
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-slate-100 text-slate-700 text-xs font-semibold shadow-2xs transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-500"
+                >
+                  <SlidersHorizontal className="w-3.5 h-3.5 text-slate-400" />
+                  <span>Package ({selectedWeight}kg)</span>
+                  <ChevronDown className="w-3 h-3 text-slate-400 ml-0.5" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                className="w-56 bg-white shadow-xl rounded-2xl p-1.5 border border-slate-200"
+              >
+                <DropdownMenuLabel className="text-[11px] text-slate-400 font-bold uppercase tracking-wider px-2.5 py-1">
+                  Parcel Dead Weight
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {[
+                  { weight: 0.5, label: '0.5 kg (Small Parcel)', desc: 'Standard flyer / accessories' },
+                  { weight: 1.0, label: '1.0 kg (Standard Box)', desc: 'Home & Kitchen / electronics' },
+                  { weight: 2.0, label: '2.0 kg (Medium Box)', desc: 'Multi-product order' },
+                  { weight: 5.0, label: '5.0 kg (Heavy Box)', desc: 'Bulk shipment / appliances' }
+                ].map((opt) => (
+                  <DropdownMenuItem
+                    key={opt.weight}
+                    onClick={() => {
+                      setSelectedWeight(opt.weight);
+                      if (activePincode && activePincode.length === 6) {
+                        runCheck(activePincode, opt.weight);
+                      }
+                    }}
+                    className={`flex items-center justify-between p-2 rounded-xl cursor-pointer ${
+                      selectedWeight === opt.weight
+                        ? 'bg-brand-50 text-brand-700 font-bold'
+                        : 'hover:bg-slate-50'
+                    }`}
+                  >
+                    <div>
+                      <p className="text-xs font-semibold">{opt.label}</p>
+                      <p className="text-[10px] text-slate-400">{opt.desc}</p>
+                    </div>
+                    {selectedWeight === opt.weight && (
+                      <Check className="w-4 h-4 text-brand-600 shrink-0 ml-2" />
+                    )}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       )}
@@ -255,13 +309,13 @@ export const ShippingRatesCard: React.FC<ShippingRatesCardProps> = ({
 
               <div>
                 <div className="flex items-center flex-wrap gap-2">
-                  <h4 className="text-sm sm:text-base font-extrabold text-slate-900">
+                  <h4 className="text-sm sm:text-base font-bold text-slate-900">
                     Delivery Available to {activePincode}
                   </h4>
                   <span className="bg-emerald-600 text-white font-black text-[10px] tracking-wider uppercase px-2 py-0.5 rounded-md">
                     SERVICEABLE
                   </span>
-                  <span className="border border-emerald-400 text-emerald-800 bg-emerald-50/70 text-xs font-semibold px-2.5 py-0.5 rounded-full">
+                  <span className="border border-emerald-400 text-emerald-800 bg-emerald-50/70 text-xs font-medium px-2.5 py-0.5 rounded-full">
                     {courierName}
                   </span>
                 </div>
@@ -278,7 +332,7 @@ export const ShippingRatesCard: React.FC<ShippingRatesCardProps> = ({
               <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider block">
                 FREIGHT CHARGE
               </span>
-              <span className="text-xl sm:text-2xl font-black text-slate-900 block tracking-tight">
+              <span className="text-xl sm:text-2xl font-medium text-slate-900 block tracking-tight">
                 {formatCurrency(freightCharge)}
               </span>
             </div>
@@ -297,7 +351,7 @@ export const ShippingRatesCard: React.FC<ShippingRatesCardProps> = ({
                 <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider block">
                   ESTIMATED TRANSIT TIME
                 </span>
-                <span className="text-sm sm:text-base font-extrabold text-slate-900 block">
+                <span className="text-sm sm:text-base font-medium text-slate-900 block">
                   {transitDays} Days
                 </span>
               </div>
@@ -312,7 +366,7 @@ export const ShippingRatesCard: React.FC<ShippingRatesCardProps> = ({
                 <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider block">
                   EXPECTED ARRIVAL
                 </span>
-                <span className="text-sm sm:text-base font-extrabold text-slate-900 block">
+                <span className="text-sm sm:text-base font-medium text-slate-900 block">
                   {arrivalDateString}
                 </span>
               </div>

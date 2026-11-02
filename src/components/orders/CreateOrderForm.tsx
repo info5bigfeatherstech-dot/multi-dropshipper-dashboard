@@ -16,8 +16,17 @@ import {
   AlertCircle,
   FileDown,
   Search,
-  PackageSearch
+  PackageSearch,
+  ChevronDown
 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator
+} from '../ui/dropdown-menu';
 import { openRazorpayCheckout } from '../../utils/razorpay';
 import { ordersService, type QuoteResponse } from '../../services/ordersService';
 import { productsService } from '../../services/productsService';
@@ -72,14 +81,14 @@ export const CreateOrderForm: React.FC<CreateOrderFormProps> = ({ initialProduct
 
   // Shipping Address with explicit houseNumber & area to satisfy courier validation
   const [address, setAddress] = useState({
-    houseNumber: 'Flat 402',
-    building: 'Sea Breeze Tower',
-    area: 'Bandra West',
-    line1: 'Flat 402, Sea Breeze Tower, Bandra West',
-    line2: 'Near Mehboob Studio',
-    city: 'Delhi',
-    state: 'Delhi',
-    postalCode: '110043',
+    houseNumber: '',
+    building: '',
+    area: '',
+    line1: '',
+    line2: '',
+    city: '',
+    state: '',
+    postalCode: '',
     country: 'India'
   });
 
@@ -580,25 +589,66 @@ export const CreateOrderForm: React.FC<CreateOrderFormProps> = ({ initialProduct
                     </h3>
                   </div>
 
-                  {/* Add more item dropdown */}
-                  <div className="relative">
-                    <select
-                      onChange={(e) => {
-                        const found = catalogProducts.find((p) => p.id === e.target.value);
-                        if (found) handleAddItem(found);
-                        e.target.value = '';
-                      }}
-                      defaultValue=""
-                      className="text-xs border border-brand-400 bg-white text-brand-700 rounded-xl px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-brand-500 font-semibold cursor-pointer shadow-xs hover:border-brand-500 transition-colors"
+                  {/* Add more item dropdown using shadcn DropdownMenu */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        type="button"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-brand-300 bg-white hover:bg-brand-50 text-brand-700 text-xs font-semibold shadow-2xs transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-500"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Add Another Product</span>
+                        <ChevronDown className="w-3.5 h-3.5 opacity-60 ml-0.5" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      align="end"
+                      className="w-80 max-h-80 overflow-y-auto p-1.5 bg-white shadow-xl rounded-2xl border border-slate-200"
                     >
-                      <option value="" disabled>+ Add Another Product</option>
-                      {catalogProducts.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.name} ({formatCurrency(p.dropshipPrice)})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                      <DropdownMenuLabel className="text-[11px] text-slate-400 font-bold uppercase tracking-wider px-2.5 py-1.5">
+                        Add Catalog Product
+                      </DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      {catalogProducts.map((p) => {
+                        const inOrder = selectedItems.find((it) => it.product.id === p.id);
+                        return (
+                          <DropdownMenuItem
+                            key={p.id}
+                            onClick={() => handleAddItem(p)}
+                            className="flex items-center gap-2.5 p-2 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors"
+                          >
+                            <img
+                              src={p.thumbnail}
+                              alt={p.name}
+                              className="w-9 h-9 rounded-lg object-cover border border-slate-200 shrink-0 bg-slate-50"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src =
+                                  'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=400&q=80';
+                              }}
+                            />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-semibold text-slate-800 truncate">{p.name}</p>
+                              <p className="text-[10px] text-slate-400 font-mono">SKU: {p.sku}</p>
+                            </div>
+                            <div className="text-right shrink-0">
+                              <span className="text-xs font-bold text-brand-600 block">
+                                {formatCurrency(p.dropshipPrice)}
+                              </span>
+                              {inOrder ? (
+                                <span className="text-[10px] text-amber-600 font-medium">
+                                  ({inOrder.quantity} added)
+                                </span>
+                              ) : (
+                                <span className="text-[10px] text-emerald-600 font-medium">
+                                  + Add
+                                </span>
+                              )}
+                            </div>
+                          </DropdownMenuItem>
+                        );
+                      })}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
 
                 {/* Integrated Product Search Bar */}
@@ -870,7 +920,7 @@ export const CreateOrderForm: React.FC<CreateOrderFormProps> = ({ initialProduct
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <Input
-                      label="House / Flat / Building Number *"
+                      label="House / Flat / Building Number"
                       placeholder="e.g. Flat 402, Sea Breeze Tower"
                       value={address.houseNumber}
                       onChange={(e) => {
@@ -887,7 +937,7 @@ export const CreateOrderForm: React.FC<CreateOrderFormProps> = ({ initialProduct
 
                   <div>
                     <Input
-                      label="Area / Sector / Locality *"
+                      label="Area / Sector / Locality"
                       placeholder="e.g. Bandra West or Dwarka Sector 6"
                       value={address.area}
                       onChange={(e) => {
@@ -905,14 +955,14 @@ export const CreateOrderForm: React.FC<CreateOrderFormProps> = ({ initialProduct
                   <div className="sm:col-span-2">
                     <Input
                       label="Street / Landmark (Optional)"
-                      placeholder="Near Mehboob Studio"
+                      placeholder="e.g. Near Mehboob Studio or Metro Pillar 42"
                       value={address.line2}
                       onChange={(e) => setAddress((prev) => ({ ...prev, line2: e.target.value }))}
                     />
                   </div>
 
                   <Input
-                    label="Destination PIN Code *"
+                    label="Destination PIN Code"
                     placeholder="e.g. 110043"
                     maxLength={6}
                     value={address.postalCode}
@@ -925,16 +975,16 @@ export const CreateOrderForm: React.FC<CreateOrderFormProps> = ({ initialProduct
 
                   <div className="grid grid-cols-2 gap-3">
                     <Input
-                      label="City *"
-                      placeholder="Delhi"
+                      label="City"
+                      placeholder="e.g. Delhi or Mumbai"
                       value={address.city}
                       onChange={(e) => setAddress((prev) => ({ ...prev, city: e.target.value }))}
                       required
                     />
 
                     <Input
-                      label="State *"
-                      placeholder="Delhi"
+                      label="State"
+                      placeholder="e.g. Delhi or Maharashtra"
                       value={address.state}
                       onChange={(e) => setAddress((prev) => ({ ...prev, state: e.target.value }))}
                       required
@@ -945,7 +995,7 @@ export const CreateOrderForm: React.FC<CreateOrderFormProps> = ({ initialProduct
                 {/* Shipping & Courier Rates Section inside this card */}
                 <div className="pt-2">
                   <ShippingRatesCard
-                    pincode={address.postalCode || '110043'}
+                    pincode={address.postalCode}
                     onPincodeChange={(newPin) => {
                       setAddress((prev) => ({ ...prev, postalCode: newPin }));
                     }}
