@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Package, Lock, Mail, ArrowRight, ShieldCheck, Sparkles, CheckCircle2 } from 'lucide-react';
+import { Package, Lock, Mail, ArrowRight, ShieldCheck, Sparkles, CheckCircle2, Eye, EyeOff } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { loginThunk } from '../../store/slices/authSlice';
 import { addToast } from '../../store/slices/uiSlice';
@@ -16,6 +16,7 @@ export const LoginPage: React.FC = () => {
 
   const [identifier, setIdentifier] = useState('partner@dropflow.in');
   const [password, setPassword] = useState('DropshipPass@2026');
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -90,12 +91,27 @@ export const LoginPage: React.FC = () => {
 
             <Input
               label="Password"
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               placeholder="••••••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
               leftIcon={<Lock className="w-4 h-4" />}
+              rightIcon={
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="text-slate-400 hover:text-slate-700 transition-colors p-1 rounded-lg focus:outline-none focus:ring-1 focus:ring-brand-500 cursor-pointer"
+                  title={showPassword ? 'Hide password' : 'Show password'}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
+                </button>
+              }
             />
 
             <div className="flex items-center justify-between text-xs pt-1">
@@ -142,18 +158,6 @@ export const LoginPage: React.FC = () => {
               </Link>
             </p>
           </div>
-        </div>
-
-        {/* Trust Badges */}
-        <div className="mt-6 flex items-center justify-center gap-6 text-[11px] text-slate-400 font-medium">
-          <span className="flex items-center gap-1.5">
-            <ShieldCheck className="w-4 h-4 text-emerald-600" />
-            Bank-Grade Razorpay Auth
-          </span>
-          <span className="flex items-center gap-1.5">
-            <CheckCircle2 className="w-4 h-4 text-brand-600" />
-            Verified Wholesale Sourcing
-          </span>
         </div>
       </div>
     </div>
